@@ -1,0 +1,6 @@
+{
+  "name": "سامانه هوشمند استعلام قیمت و سفارش چاپ",
+  "description": "سامانه جامع محاسبه آنی قیمت چاپ، پیش‌فاکتور آنلاین، شبیه‌ساز سایز و برش، و راهنمای تخصصی لیتوگرافی و چاپ استودیو گرافیک",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
