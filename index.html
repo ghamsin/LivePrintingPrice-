@@ -15,7 +15,17 @@
   </head>
   <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-amber-500 selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="./src/main.tsx"></script>
+    <script>
+      // Automatic fallback when hosted as raw unbuilt source on GitHub Pages (main branch root)
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          if (!window.__VITE_APP_MOUNTED__ && root && root.children.length === 0) {
+            window.location.replace('./standalone.html');
+          }
+        }, 700);
+      });
+    </script>
   </body>
 </html>
-
