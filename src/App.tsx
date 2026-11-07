@@ -83,6 +83,10 @@ export default function App() {
       const raw = localStorage.getItem(STORAGE_KEY_ADMIN);
       if (raw) {
         const parsed = JSON.parse(raw);
+        // If storeName was previous uncustomized default, update it to 'چاپ رامین'
+        if (parsed.storeName === 'استودیو چاپ و گرافیک نقش‌نگار') {
+          parsed.storeName = 'چاپ رامین';
+        }
         return { ...DEFAULT_ADMIN_SETTINGS, ...parsed };
       }
     } catch {
@@ -467,7 +471,7 @@ export default function App() {
           data-testid="header-store-name"
           className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 whitespace-nowrap shrink-0"
         >
-          {adminSettings.storeName || 'استودیو چاپ و گرافیک نقش‌نگار'}
+          {adminSettings.storeName || 'چاپ رامین'}
         </a>
 
         {/* Zone 2: 4 concise single-line text navigation links */}
@@ -589,12 +593,12 @@ export default function App() {
           </div>
         </section>
 
-        {/* 5 Visual Category Tabs */}
+        {/* Category Tabs */}
         <section aria-label="دسته‌بندی محصولات چاپی" id="calculator-workspace">
           <div
             role="tablist"
             aria-label="دسته‌بندی خدمات چاپ"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
           >
             {PRINT_CATEGORIES.map((cat) => {
               const isSelected = activeCategory === cat.key;
@@ -1180,7 +1184,7 @@ export default function App() {
       <footer className="mt-12 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 px-6">
         <div className="max-w-[1360px] mx-auto flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div>
-            {adminSettings.storeName || 'استودیو چاپ و گرافیک نقش‌نگار'} · {adminSettings.invoiceTitle}
+            {adminSettings.storeName || 'چاپ رامین'} · {adminSettings.invoiceTitle}
           </div>
           <div className="flex items-center gap-4">
             <button

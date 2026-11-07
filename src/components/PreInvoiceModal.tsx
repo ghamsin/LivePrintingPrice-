@@ -56,7 +56,7 @@ export const PreInvoiceModal: React.FC<PreInvoiceModalProps> = ({
 
   const invoiceSerial = `INV-${String(new Date().getTime()).slice(-6)}`;
 
-  const effectiveStoreName = storeName.trim() || 'استودیو چاپ و گرافیک نقش‌نگار';
+  const effectiveStoreName = storeName.trim() || 'چاپ رامین';
   const effectiveInvoiceTitle =
     invoiceTitle.trim() || 'پیش‌فاکتور رسمی خدمات لیتوگرافی، چاپ افست و دیجیتال';
 

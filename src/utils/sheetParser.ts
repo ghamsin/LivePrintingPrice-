@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
 
-export type PrintCategoryKey = 'جنس معمولی' | 'فانتزی' | 'pvc' | 'فرم عمومی' | 'پاکت';
+export type PrintCategoryKey = 'جنس معمولی' | 'فانتزی' | 'pvc' | 'فرم عمومی' | 'لیبل' | 'پاکت';
 
 export type NormalizedSides = 'یک رو' | 'دو رو';
 
@@ -17,35 +17,42 @@ export const PRINT_CATEGORIES: CategoryMeta[] = [
     key: 'جنس معمولی',
     title: 'کارت ویزیت عمومی',
     shortTitle: 'جنس معمولی',
-    subtitle: 'گلاسه، سلفون مات و براق، کتان امباس و کاتالوگ',
-    badgeText: 'تحویل ۱ تا ۲ روزه',
+    subtitle: 'گلاسه، سلفون، کتان، کارتی، سایزهای سفارشی و فرم‌های ۶ ساعته',
+    badgeText: 'تحویل ۱ تا ۵ روزه',
   },
   {
     key: 'فانتزی',
     title: 'کارت ویزیت فانتزی و لوکس',
     shortTitle: 'فانتزی',
-    subtitle: 'لمینت برجسته، مخملی، طلاکارت، طرح موج و دورگرد',
+    subtitle: 'لمینت برجسته، مخملی، طلاکارت، طرح موج، نقره‌کوب و دورگرد',
     badgeText: 'کیفیت ویژه برندینگ',
   },
   {
     key: 'pvc',
     title: 'کارتهای PVC',
     shortTitle: 'PVC',
-    subtitle: 'کارت‌های پرسنلی، باشگاهی و بانکی ۳۰۰ تا ۷۶۰ میکرون',
+    subtitle: 'کارت‌های پرسنلی، باشگاهی و بانکی ۳۰۰ تا ۷۶۰ میکرون و برفکی',
     badgeText: 'مقاوم و ضدآب',
   },
   {
     key: 'فرم عمومی',
-    title: 'تراکت و سربرگ',
+    title: 'تراکت، سربرگ و پوستر',
     shortTitle: 'فرم عمومی',
-    subtitle: 'انواع تراکت گلاسه و تحریر، سربرگ تحریر، کتان و کارتی',
+    subtitle: 'انواع تراکت گلاسه و تحریر، سربرگ و پوستر در سایزهای A4، A5، A6، B4 و B5',
     badgeText: 'فرم‌های شیت عمومی',
+  },
+  {
+    key: 'لیبل',
+    title: 'انواع لیبل و برچسب',
+    shortTitle: 'لیبل',
+    subtitle: 'لیبل شیشه‌ای، سلفون، یووی، بدون روکش، متالایز، طلاکوب و دایره‌ای',
+    badgeText: 'برچسب و لیبل پشت‌چسبدار',
   },
   {
     key: 'پاکت',
     title: 'انواع پاکت نامه و اداری',
     shortTitle: 'پاکت',
-    subtitle: 'پاکت ملخی، کیسه‌ای و کیفی در سایزهای A3، A4 و A5',
+    subtitle: 'پاکت ملخی، کیسه‌ای و کیفی در سایزهای A3، A4 و A5 (تحریر، گلاسه، کتان)',
     badgeText: 'ست اداری و مکاتبات',
   },
 ];
@@ -104,11 +111,22 @@ export function parseNumericCell(val: string | number | undefined): number {
 export function normalizeCategoryHeader(rawHeader: string): PrintCategoryKey | null {
   const trimmed = String(rawHeader || '').trim().toLowerCase();
   if (!trimmed) return null;
-  if (trimmed.includes('جنس معمولی') || trimmed.includes('معمولی')) return 'جنس معمولی';
-  if (trimmed.includes('فانتزی')) return 'فانتزی';
-  if (trimmed.includes('pvc') || trimmed.includes('پی وی سی')) return 'pvc';
-  if (trimmed.includes('فرم عمومی') || trimmed.includes('تراکت')) return 'فرم عمومی';
+  // Check 'فرم عمومی' and 'فرم' before 'عمومی'
+  if (trimmed.includes('فرم عمومی') || trimmed.includes('تراکت') || trimmed.includes('فرم')) return 'فرم عمومی';
+  if (trimmed.includes('لیبل') || trimmed.includes('برچسب')) return 'لیبل';
   if (trimmed.includes('پاکت')) return 'پاکت';
+  if (trimmed.includes('pvc') || trimmed.includes('پی وی سی')) return 'pvc';
+  if (trimmed.includes('فانتزی')) return 'فانتزی';
+  if (
+    trimmed.includes('جنس معمولی') ||
+    trimmed.includes('معمولی') ||
+    trimmed.includes('سفارشی') ||
+    trimmed.includes('۶ ساعته') ||
+    trimmed.includes('6 ساعته') ||
+    trimmed.includes('عمومی')
+  ) {
+    return 'جنس معمولی';
+  }
   return null;
 }
 

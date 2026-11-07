@@ -23,7 +23,7 @@ export interface AdminSettings {
 }
 
 export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
-  storeName: 'استودیو چاپ و گرافیک نقش‌نگار',
+  storeName: 'چاپ رامین',
   invoiceTitle: 'پیش‌فاکتور رسمی خدمات لیتوگرافی، چاپ افست و دیجیتال',
   storeWhatsapp: '989120000000',
   invoiceFooterNote:
@@ -37,6 +37,7 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
     'فانتزی': 30,
     'pvc': 30,
     'فرم عمومی': 30,
+    'لیبل': 30,
     'پاکت': 30,
   },
   roundingStep: 1000,

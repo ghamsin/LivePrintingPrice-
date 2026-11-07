@@ -406,7 +406,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         storeName: e.target.value,
                       })
                     }
-                    placeholder="مثلاً: استودیو چاپ و گرافیک نقش‌نگار"
+                    placeholder="مثلاً: چاپ رامین"
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                   />
                 </div>

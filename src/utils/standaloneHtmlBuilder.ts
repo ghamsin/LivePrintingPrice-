@@ -30,7 +30,7 @@ pub extern "C" fn calc_unit_price(final_price: f64, quantity: f64) -> f64 {
  */
 export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>): string {
   const escapedCsv = JSON.stringify(FALLBACK_SHEET_CSV);
-  const initialStoreName = settings?.storeName || 'استودیو چاپ و گرافیک نقش‌نگار';
+  const initialStoreName = settings?.storeName || 'چاپ رامین';
   const initialInvoiceTitle =
     settings?.invoiceTitle || 'پیش‌فاکتور رسمی خدمات لیتوگرافی، چاپ افست و دیجیتال';
   const initialWhatsapp = settings?.storeWhatsapp || '989120000000';
@@ -116,9 +116,9 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
       </div>
     </section>
 
-    <!-- 5 Category Tabs -->
+    <!-- 6 Category Tabs -->
     <section id="calculator-section" class="no-print">
-      <div id="category-tabs" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+      <div id="category-tabs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"></div>
     </section>
 
     <!-- Interactive Calculator + Visual Size & Cut Preview -->
@@ -386,6 +386,7 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
       { key: "فانتزی", title: "کارت ویزیت فانتزی و لوکس" },
       { key: "pvc", title: "کارتهای PVC" },
       { key: "فرم عمومی", title: "تراکت و سربرگ" },
+      { key: "لیبل", title: "انواع لیبل و برچسب" },
       { key: "پاکت", title: "انواع پاکت نامه و اداری" }
     ];
 
@@ -429,10 +430,11 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
         if (!r || r.length < 4) continue;
         const c0 = String(r[0] || "").trim(), c2 = String(r[2] || "").trim(), c7 = String(r[7] || "").trim();
         if (c0 === "قیمت" || c2 === "تحویل") {
-          if (c7.includes("معمولی")) cat = "جنس معمولی";
+          if (c7.includes("فرم عمومی")) cat = "فرم عمومی";
+          else if (c7.includes("لیبل") || c7.includes("برچسب")) cat = "لیبل";
+          else if (c7.includes("سفارشی") || c7.includes("۶ ساعته") || c7.includes("6 ساعته") || c7.includes("عمومی") || c7.includes("معمولی")) cat = "جنس معمولی";
           else if (c7.includes("فانتزی")) cat = "فانتزی";
           else if (c7.toLowerCase().includes("pvc")) cat = "pvc";
-          else if (c7.includes("فرم")) cat = "فرم عمومی";
           else if (c7.includes("پاکت")) cat = "پاکت";
           lastProd = ""; lastQty = 0; lastSize = "";
           continue;
@@ -688,7 +690,7 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
     }
 
     function saveAdminSettings() {
-      settings.storeName = document.getElementById("adm-store-name").value || "استودیو چاپ و گرافیک نقش‌نگار";
+      settings.storeName = document.getElementById("adm-store-name").value || "چاپ رامین";
       settings.invoiceTitle = document.getElementById("adm-invoice-title").value || "پیش‌فاکتور رسمی خدمات چاپ";
       settings.margin = parseFloat(document.getElementById("adm-margin").value) || 0;
       settings.step = parseInt(document.getElementById("adm-step").value, 10) || 1000;

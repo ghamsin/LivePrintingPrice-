@@ -52,14 +52,14 @@ test('WASM pricing benchmark runs and returns valid throughput', () => {
   assert.ok(result.opsPerSec > 0);
 });
 
-test('Stateful Forward-Fill Parser parses all 5 categories and handles merged cells', () => {
+test('Stateful Forward-Fill Parser parses all 6 categories and handles merged cells', () => {
   const rows = parsePrintSheetCsv(FALLBACK_SHEET_CSV);
-  assert.ok(rows.length > 180, `Expected > 180 rows, got ${rows.length}`);
+  assert.ok(rows.length > 350, `Expected > 350 rows, got ${rows.length}`);
 
   const categories = new Set(rows.map((r) => r.category));
   assert.deepEqual(
     Array.from(categories),
-    ['جنس معمولی', 'فانتزی', 'pvc', 'فرم عمومی', 'پاکت']
+    ['جنس معمولی', 'فانتزی', 'pvc', 'فرم عمومی', 'لیبل', 'پاکت']
   );
 
   // Rule 2: Check forward-fill on "گلاسه یووی" (Row 1 is یکرو, Row 2 is دورو with empty name/size/qty)
@@ -70,12 +70,12 @@ test('Stateful Forward-Fill Parser parses all 5 categories and handles merged ce
   assert.equal(glossyUvRows[0].sides, 'یک رو');
   assert.equal(glossyUvRows[0].size, '85*48');
   assert.equal(glossyUvRows[0].quantity, 1000);
-  assert.equal(glossyUvRows[0].baseCost, 1503700);
+  assert.equal(glossyUvRows[0].baseCost, 1371700);
 
   assert.equal(glossyUvRows[1].sides, 'دو رو');
   assert.equal(glossyUvRows[1].size, '85*48');
   assert.equal(glossyUvRows[1].quantity, 1000);
-  assert.equal(glossyUvRows[1].baseCost, 1930500);
+  assert.equal(glossyUvRows[1].baseCost, 1798500);
 });
 
 test('Rule 4: Missing Name Fix renames 60*60 under "لمینت برجسته مخملی" to "لمینت برجسته مخملی مربع"', () => {
