@@ -1,59 +1,130 @@
 import Papa from 'papaparse';
+import { FALLBACK_PRODUCTS_ALL_11_SHEETS } from '../data/fallbackSheets';
 
-export type PrintCategoryKey = 'جنس معمولی' | 'فانتزی' | 'pvc' | 'فرم عمومی' | 'لیبل' | 'پاکت';
+export type PrintCategoryKey =
+  | 'کارت ویزیت'
+  | 'تراکت ، سربرگ ، پوستر'
+  | 'پشت چسبدار (لیبل)'
+  | 'پاکت'
+  | 'انواع جعبه و بسته بندی'
+  | 'محصولات تبلیغاتی'
+  | 'محصولات اداری و تجاری'
+  | 'فاکتور'
+  | 'محصولات فست فود'
+  | 'محصولات ۶ ساعته'
+  | 'محصولات سایز سفارشی';
 
 export type NormalizedSides = 'یک رو' | 'دو رو';
 
 export interface CategoryMeta {
   key: PrintCategoryKey;
+  gid: string;
   title: string;
   shortTitle: string;
   subtitle: string;
   badgeText: string;
+  iconName: string;
 }
 
 export const PRINT_CATEGORIES: CategoryMeta[] = [
   {
-    key: 'جنس معمولی',
-    title: 'کارت ویزیت عمومی',
-    shortTitle: 'جنس معمولی',
-    subtitle: 'گلاسه، سلفون، کتان، کارتی، سایزهای سفارشی و فرم‌های ۶ ساعته',
-    badgeText: 'تحویل ۱ تا ۵ روزه',
+    key: 'کارت ویزیت',
+    gid: '2076130864',
+    title: 'انواع کارت ویزیت (عمومی، فانتزی، PVC)',
+    shortTitle: 'کارت ویزیت',
+    subtitle: 'سلفون مات و براق، لمینت برجسته، مخملی، طلاکارت، کتان و PVC ضدآب',
+    badgeText: '۱۴۶ مدل متنوع',
+    iconName: 'CreditCard',
   },
   {
-    key: 'فانتزی',
-    title: 'کارت ویزیت فانتزی و لوکس',
-    shortTitle: 'فانتزی',
-    subtitle: 'لمینت برجسته، مخملی، طلاکارت، طرح موج، نقره‌کوب و دورگرد',
-    badgeText: 'کیفیت ویژه برندینگ',
+    key: 'تراکت ، سربرگ ، پوستر',
+    gid: '1900338465',
+    title: 'تراکت، سربرگ و پوستر تبلیغاتی',
+    shortTitle: 'تراکت و پوستر',
+    subtitle: 'انواع تراکت گلاسه و تحریر، سربرگ اداری A4/A5، بروشور تاشده و پوستر',
+    badgeText: '۲۶۰ مدل پرتیراژ',
+    iconName: 'FileText',
   },
   {
-    key: 'pvc',
-    title: 'کارتهای PVC',
-    shortTitle: 'PVC',
-    subtitle: 'کارت‌های پرسنلی، باشگاهی و بانکی ۳۰۰ تا ۷۶۰ میکرون و برفکی',
-    badgeText: 'مقاوم و ضدآب',
-  },
-  {
-    key: 'فرم عمومی',
-    title: 'تراکت، سربرگ و پوستر',
-    shortTitle: 'فرم عمومی',
-    subtitle: 'انواع تراکت گلاسه و تحریر، سربرگ و پوستر در سایزهای A4، A5، A6، B4 و B5',
-    badgeText: 'فرم‌های شیت عمومی',
-  },
-  {
-    key: 'لیبل',
-    title: 'انواع لیبل و برچسب',
-    shortTitle: 'لیبل',
-    subtitle: 'لیبل شیشه‌ای، سلفون، یووی، بدون روکش، متالایز، طلاکوب و دایره‌ای',
-    badgeText: 'برچسب و لیبل پشت‌چسبدار',
+    key: 'پشت چسبدار (لیبل)',
+    gid: '1222527184',
+    title: 'پشت‌چسبدار و انواع لیبل صنعتی',
+    shortTitle: 'لیبل و برچسب',
+    subtitle: 'لیبل سلفون، یووی، بدون روکش، متالایز، شیشه‌ای، طلاکوب و نیم‌تاغ',
+    badgeText: '۱۱۱ مدل چسبی',
+    iconName: 'Tag',
   },
   {
     key: 'پاکت',
-    title: 'انواع پاکت نامه و اداری',
-    shortTitle: 'پاکت',
-    subtitle: 'پاکت ملخی، کیسه‌ای و کیفی در سایزهای A3، A4 و A5 (تحریر، گلاسه، کتان)',
-    badgeText: 'ست اداری و مکاتبات',
+    gid: '2093338645',
+    title: 'انواع پاکت اداری، نامه و فانتزی',
+    shortTitle: 'پاکت اداری',
+    subtitle: 'پاکت ملخی (نامه)، پاکت کیسه‌ای A4، پاکت A5 و A3 تحریر، گلاسه و کتان',
+    badgeText: '۱۰۲ مدل پاکت',
+    iconName: 'Mail',
+  },
+  {
+    key: 'انواع جعبه و بسته بندی',
+    gid: '2006393519',
+    title: 'انواع جعبه، پاکتشو و بسته‌بندی',
+    shortTitle: 'جعبه و بسته‌بندی',
+    subtitle: 'لیبل‌های دایره‌ای پلمپ، پاکتشو، جعبه مقوایی و ملزومات بسته‌بندی',
+    badgeText: '۲۰۰ مدل بسته‌بندی',
+    iconName: 'Package',
+  },
+  {
+    key: 'محصولات تبلیغاتی',
+    gid: '1045170615',
+    title: 'محصولات و هدایای تبلیغاتی',
+    shortTitle: 'تبلیغاتی و هدایا',
+    subtitle: 'لیوان کاغذی بهداشتی، کارت‌های پروموشن، فولدر، ساک دستی و اقلام تشریفاتی',
+    badgeText: '۴۸۹ محصول تبلیغی',
+    iconName: 'Megaphone',
+  },
+  {
+    key: 'محصولات اداری و تجاری',
+    gid: '1518433362',
+    title: 'محصولات اداری، سازمانی و ست تجاری',
+    shortTitle: 'اداری و تجاری',
+    subtitle: 'سربرگ‌های سایز واقعی، یادداشت اداری، فرم‌های اداری و ست اوراق',
+    badgeText: '۲۳۴ محصول اداری',
+    iconName: 'Briefcase',
+  },
+  {
+    key: 'فاکتور',
+    gid: '1047767151',
+    title: 'انواع فاکتور رسمی و کاربن‌لس (NCR)',
+    shortTitle: 'فاکتور و قبض',
+    subtitle: 'فاکتورهای تک‌رنگ مشکی/سرمه‌ای، ۲ رنگ و ۴ رنگ در سایزهای A3، A4، A5 و B5',
+    badgeText: '۸۳ مدل کاربن‌لس',
+    iconName: 'Receipt',
+  },
+  {
+    key: 'محصولات فست فود',
+    gid: '1821825749',
+    title: 'محصولات چاپی فست‌فود و رستوران',
+    shortTitle: 'فست‌فود و رستوران',
+    subtitle: 'زیربشقابی و زیرسینی (Table Mat) مومی و پوستی، منو، پاکت برگر و کاغذ غذا',
+    badgeText: '۶۹ محصول رستورانی',
+    iconName: 'Utensils',
+  },
+  {
+    key: 'محصولات ۶ ساعته',
+    gid: '1819354919',
+    title: 'چاپ سوپر اکسپرس ۶ ساعته روزانه',
+    shortTitle: 'فوری ۶ ساعته',
+    subtitle: 'کارت ویزیت، تراکت گلاسه و تحریر، لیبل سلفون با تحویل قطعی در همان روز',
+    badgeText: 'تحویل فوری روزانه',
+    iconName: 'Zap',
+  },
+  {
+    key: 'محصولات سایز سفارشی',
+    gid: '1616408270',
+    title: 'محصولات چاپی با سایز سفارشی و دلخواه',
+    shortTitle: 'سایز سفارشی',
+    subtitle: 'چاپ با ابعاد اختصاصی و برش گیوتینی آزاد برای گلاسه، تحریر و لیبل',
+    badgeText: 'ابعاد آزاد و دلخواه',
+    iconName: 'Sliders',
   },
 ];
 
@@ -106,26 +177,32 @@ export function parseNumericCell(val: string | number | undefined): number {
 }
 
 /**
- * Normalizes category header strings from col[7].
+ * Normalizes category header strings from col[7] to one of the 11 categories.
  */
 export function normalizeCategoryHeader(rawHeader: string): PrintCategoryKey | null {
   const trimmed = String(rawHeader || '').trim().toLowerCase();
   if (!trimmed) return null;
-  // Check 'فرم عمومی' and 'فرم' before 'عمومی'
-  if (trimmed.includes('فرم عمومی') || trimmed.includes('تراکت') || trimmed.includes('فرم')) return 'فرم عمومی';
-  if (trimmed.includes('لیبل') || trimmed.includes('برچسب')) return 'لیبل';
+
+  if (trimmed.includes('فاکتور')) return 'فاکتور';
+  if (trimmed.includes('فست فود') || trimmed.includes('رستوران') || trimmed.includes('سینی') || trimmed.includes('بشقابی')) return 'محصولات فست فود';
+  if (trimmed.includes('جعبه') || trimmed.includes('بسته بندی') || trimmed.includes('پاکتشو')) return 'انواع جعبه و بسته بندی';
+  if (trimmed.includes('تبلیغاتی') || trimmed.includes('لیوان') || trimmed.includes('هدایا')) return 'محصولات تبلیغاتی';
+  if (trimmed.includes('اداری') && (trimmed.includes('تجاری') || trimmed.includes('سربرگ اداری') || trimmed.includes('محصولات اداری'))) return 'محصولات اداری و تجاری';
+  if (trimmed.includes('۶ ساعته') || trimmed.includes('6 ساعته')) return 'محصولات ۶ ساعته';
+  if (trimmed.includes('سایز سفارشی') || trimmed.includes('سفارشی') || trimmed.includes('دلخواه')) return 'محصولات سایز سفارشی';
   if (trimmed.includes('پاکت')) return 'پاکت';
-  if (trimmed.includes('pvc') || trimmed.includes('پی وی سی')) return 'pvc';
-  if (trimmed.includes('فانتزی')) return 'فانتزی';
+  if (trimmed.includes('لیبل') || trimmed.includes('برچسب') || trimmed.includes('چسبدار')) return 'پشت چسبدار (لیبل)';
+  if (trimmed.includes('تراکت') || trimmed.includes('پوستر') || trimmed.includes('سربرگ') || trimmed.includes('فرم عمومی') || trimmed.includes('فرم')) return 'تراکت ، سربرگ ، پوستر';
   if (
-    trimmed.includes('جنس معمولی') ||
+    trimmed.includes('کارت ویزیت') ||
+    trimmed.includes('کارت') ||
     trimmed.includes('معمولی') ||
-    trimmed.includes('سفارشی') ||
-    trimmed.includes('۶ ساعته') ||
-    trimmed.includes('6 ساعته') ||
-    trimmed.includes('عمومی')
+    trimmed.includes('عمومی') ||
+    trimmed.includes('فانتزی') ||
+    trimmed.includes('pvc') ||
+    trimmed.includes('پی وی سی')
   ) {
-    return 'جنس معمولی';
+    return 'کارت ویزیت';
   }
   return null;
 }
@@ -263,6 +340,30 @@ export function extractSizeDimensions(
     };
   }
 
+  // Diameter (circles) like قطر 2, قطر 2.5, قطر 3, قطر 4.5, قطر 5
+  const diameterMatch = s.match(/قطر\s*([\d.]+)/);
+  if (diameterMatch) {
+    const dVal = parseFloat(diameterMatch[1]);
+    const dMm = dVal <= 10 ? Math.round(dVal * 10) : Math.round(dVal);
+    const pD = dVal.toLocaleString('fa-IR');
+    return {
+      widthMm: dMm,
+      heightMm: dMm,
+      dimensionLabel: `قطر ${pD} سانتی‌متر (برش دایره‌ای)`,
+      isRoundedCorner: true,
+    };
+  }
+
+  // A2 size
+  if (upper.includes('A2')) {
+    return {
+      widthMm: 420,
+      heightMm: 594,
+      dimensionLabel: '۴۲۰ × ۵۹۴ میلی‌متر (A2)',
+      isRoundedCorner,
+    };
+  }
+
   return {
     widthMm: 85,
     heightMm: 55,
@@ -303,10 +404,13 @@ export function extractQuantityFromProductName(productName: string): number {
  * - col[1] (Col B): Default Sheet Margin % ("درصد")
  * - col[0] (Col A): Sheet Final Price ("قیمت")
  */
-export function parsePrintSheetRows(rawRows: string[][]): PrintProductRow[] {
+export function parsePrintSheetRows(
+  rawRows: string[][],
+  defaultCategory: PrintCategoryKey = 'کارت ویزیت'
+): PrintProductRow[] {
   const results: PrintProductRow[] = [];
 
-  let activeCategory: PrintCategoryKey = 'جنس معمولی';
+  let activeCategory: PrintCategoryKey = defaultCategory;
   let lastProductName = '';
   let lastQuantity = 0;
   let lastSize = '';
@@ -325,13 +429,11 @@ export function parsePrintSheetRows(rawRows: string[][]): PrintProductRow[] {
     const col7 = String(row[7] ?? '').trim();
 
     // Rule 1: Category Detection
-    // Whenever a row has col[0] === "قیمت" or col[2].trim() === "تحویل", treat col[7] as the new active Category
     if (col0 === 'قیمت' || col2 === 'تحویل') {
       const detectedCategory = normalizeCategoryHeader(col7);
       if (detectedCategory) {
         activeCategory = detectedCategory;
       }
-      // Reset forward-fill state when entering a new category block
       lastProductName = '';
       lastQuantity = 0;
       lastSize = '';
@@ -345,14 +447,12 @@ export function parsePrintSheetRows(rawRows: string[][]): PrintProductRow[] {
     }
 
     // Rule 4: Missing Name Fix
-    // If a row in "فانتزی" has size "60*60" right under "لمینت برجسته مخملی" with an empty name,
-    // name it "لمینت برجسته مخملی مربع"
     let currentProductName = col7;
     if (
-      activeCategory === 'فانتزی' &&
+      activeCategory === 'کارت ویزیت' &&
       !currentProductName &&
       col5 === '60*60' &&
-      lastProductName === 'لمینت برجسته مخملی'
+      lastProductName.includes('لمینت برجسته مخملی')
     ) {
       currentProductName = 'لمینت برجسته مخملی مربع';
     }
@@ -374,9 +474,8 @@ export function parsePrintSheetRows(rawRows: string[][]): PrintProductRow[] {
     let currentQuantity = parseNumericCell(col6);
     if (currentQuantity > 0) {
       lastQuantity = currentQuantity;
-    } else if (activeCategory === 'پاکت') {
+    } else if (activeCategory === 'پاکت' || currentProductName.includes('عددی')) {
       // Rule 3: Envelope Quantity Extraction
-      // In the "پاکت" category, col[6] is empty; extract the quantity (1000, 2000, 5000) automatically from lastProductName via Regex
       currentQuantity = extractQuantityFromProductName(currentProductName);
       lastQuantity = currentQuantity;
     } else if (lastQuantity > 0) {
@@ -423,9 +522,77 @@ export function parsePrintSheetRows(rawRows: string[][]): PrintProductRow[] {
 /**
  * Parses a raw CSV string into structured PrintProductRow items using PapaParse.
  */
-export function parsePrintSheetCsv(csvText: string): PrintProductRow[] {
+export function parsePrintSheetCsv(
+  csvText: string,
+  defaultCategory: PrintCategoryKey = 'کارت ویزیت'
+): PrintProductRow[] {
   const parsed = Papa.parse<string[]>(csvText, {
     skipEmptyLines: true,
   });
-  return parsePrintSheetRows(parsed.data || []);
+  return parsePrintSheetRows(parsed.data || [], defaultCategory);
+}
+
+/**
+ * Transforms raw item from fallback JSON into full PrintProductRow.
+ */
+export function getBundledFallbackProducts(): PrintProductRow[] {
+  return FALLBACK_PRODUCTS_ALL_11_SHEETS.map((item, idx) => {
+    const normalizedSides = normalizeSidesValue(item.rawSides);
+    const { widthMm, heightMm, dimensionLabel, isRoundedCorner } = extractSizeDimensions(
+      item.size,
+      item.productName
+    );
+    return {
+      id: item.id || `fb-${idx}`,
+      rowIndex: item.rowIndex || idx + 1,
+      category: item.category as PrintCategoryKey,
+      productName: item.productName,
+      quantity: item.quantity,
+      size: item.size,
+      normalizedSize: item.size.replace(/\s+/g, ' ').trim(),
+      sides: normalizedSides,
+      rawSides: item.rawSides,
+      baseCost: item.baseCost,
+      deliveryTime: item.deliveryTime,
+      sheetMarginPercent: item.sheetMarginPercent,
+      sheetFinalPrice: item.sheetFinalPrice,
+      widthMm,
+      heightMm,
+      dimensionLabel,
+      isRoundedCorner,
+    };
+  });
+}
+
+/**
+ * Fetches all 11 published sheets from Google Sheets in parallel and merges results.
+ */
+export async function fetchAndParseAllPublishedSheets(
+  onProgress?: (loaded: number, total: number) => void
+): Promise<PrintProductRow[]> {
+  const totalSheets = PRINT_CATEGORIES.length;
+  let loadedSheets = 0;
+
+  const fetchPromises = PRINT_CATEGORIES.map(async (catMeta) => {
+    const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vSCtS_8qGEMTduYU06zG5vpW4tSHCGKyJygOnX9mQiTfD_XI895ghJghhTHGhzDag/pub?gid=${catMeta.gid}&single=true&output=csv`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const parsed = Papa.parse<string[]>(text, { skipEmptyLines: true });
+      const rows = parsePrintSheetRows(parsed.data || [], catMeta.key);
+      loadedSheets++;
+      if (onProgress) onProgress(loadedSheets, totalSheets);
+      return rows;
+    } catch (err) {
+      console.warn(`Failed to fetch sheet ${catMeta.title} (gid: ${catMeta.gid}):`, err);
+      loadedSheets++;
+      if (onProgress) onProgress(loadedSheets, totalSheets);
+      return getBundledFallbackProducts().filter((p) => p.category === catMeta.key);
+    }
+  });
+
+  const allResults = await Promise.all(fetchPromises);
+  const flattened = allResults.flat();
+  return flattened.length > 0 ? flattened : getBundledFallbackProducts();
 }

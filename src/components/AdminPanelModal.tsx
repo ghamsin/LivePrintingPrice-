@@ -29,6 +29,7 @@ import {
   PrintCategoryKey,
   PrintProductRow,
   parsePrintSheetRows,
+  normalizeCategoryHeader,
 } from '../utils/sheetParser';
 import {
   calculateFinalPrice,
@@ -225,17 +226,31 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         const buffer = ev.target?.result;
         if (!buffer) return;
         const workbook = XLSX.read(buffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const rawMatrix = XLSX.utils.sheet_to_json<string[]>(worksheet, {
-          header: 1,
-          defval: '',
-        });
-        const rows = parsePrintSheetRows(rawMatrix);
-        if (rows.length > 0) {
-          onUploadCustomRows(rows, `فایل اکسل: ${fileName}`);
+        let allUploadedRows: PrintProductRow[] = [];
+
+        // Parse all sheets in the workbook
+        for (const sheetName of workbook.SheetNames) {
+          const worksheet = workbook.Sheets[sheetName];
+          const rawMatrix = XLSX.utils.sheet_to_json<string[]>(worksheet, {
+            header: 1,
+            defval: '',
+          });
+          const detected = normalizeCategoryHeader(sheetName) || 'کارت ویزیت';
+          const sheetRows = parsePrintSheetRows(rawMatrix, detected);
+          allUploadedRows = allUploadedRows.concat(sheetRows);
+        }
+
+        if (allUploadedRows.length > 0) {
+          onUploadCustomRows(
+            allUploadedRows,
+            `فایل اکسل (${workbook.SheetNames.length} شیت): ${fileName}`
+          );
           setUploadStatus(
-            `${rows.length.toLocaleString('fa-IR')} ردیف محصول با موفقیت از فایل اکسل بارگذاری شد.`
+            `${allUploadedRows.length.toLocaleString(
+              'fa-IR'
+            )} ردیف محصول از ${workbook.SheetNames.length.toLocaleString(
+              'fa-IR'
+            )} شیت با موفقیت بارگذاری شد.`
           );
         } else {
           setUploadStatus('خطا: ساختار ستون‌های فایل اکسل با قالب استاندارد مطابقت ندارد.');

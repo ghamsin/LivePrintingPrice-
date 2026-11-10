@@ -1,4 +1,5 @@
 import { FALLBACK_SHEET_CSV, LIVE_GOOGLE_SHEET_CSV_URL } from '../data/fallbackCsv';
+import { FALLBACK_PRODUCTS_ALL_11_SHEETS } from '../data/fallbackSheets';
 import { AdminSettings } from '../types/studio';
 import { DEFAULT_ADMIN_PASSWORD_HASH } from './security';
 
@@ -40,6 +41,7 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
   const initialPwdHash = settings?.adminPasswordHash || DEFAULT_ADMIN_PASSWORD_HASH;
   const initialMargin = settings?.globalMarginPercent ?? 30;
   const initialStep = settings?.roundingStep ?? 1000;
+  const fallback11SheetsJson = JSON.stringify(FALLBACK_PRODUCTS_ALL_11_SHEETS);
 
   return `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -104,11 +106,14 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
+        <button onclick="openSearchModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors cursor-pointer">
+          🔍 جستجوی هوشمند محصول
+        </button>
         <button onclick="syncGoogleSheet()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 cursor-pointer">
           بروزرسانی زنده قیمتها
         </button>
         <button onclick="toggleTheme()" class="px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer">
-          تغییر حالت روشن / تیره
+          حالت روشن / تیره
         </button>
         <button onclick="openAdminModal()" class="px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer">
           پنل مدیریت
@@ -116,9 +121,9 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
       </div>
     </section>
 
-    <!-- 6 Category Tabs -->
+    <!-- 11 Category Tabs -->
     <section id="calculator-section" class="no-print">
-      <div id="category-tabs" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"></div>
+      <div id="category-tabs" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11 gap-2"></div>
     </section>
 
     <!-- Interactive Calculator + Visual Size & Cut Preview -->
@@ -347,6 +352,22 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
     </div>
   </div>
 
+  <!-- Instant Product Search Modal -->
+  <div id="search-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto no-print">
+    <div class="w-full max-w-3xl my-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-extrabold flex items-center gap-2">
+          <span>🔍 جستجوی هوشمند در کلیه ۳۸۳ محصول چاپی</span>
+        </h3>
+        <button onclick="closeSearchModal()" class="text-sm text-slate-500 cursor-pointer">بستن ✕</button>
+      </div>
+      <div>
+        <input id="global-search-inp" type="search" oninput="onGlobalSearchInput()" placeholder="جستجوی نام محصول، جنس، سایز، فوری، ۶ ساعته..." class="w-full px-4 py-3 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+      </div>
+      <div id="search-results-box" class="max-h-[60vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 text-sm"></div>
+    </div>
+  </div>
+
   <script>
     const GOOGLE_SHEET_CSV_URL = "${LIVE_GOOGLE_SHEET_CSV_URL}";
     const FALLBACK_CSV_TEXT = ${escapedCsv};
@@ -382,16 +403,31 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
     }
 
     const CATEGORIES = [
-      { key: "جنس معمولی", title: "کارت ویزیت عمومی" },
-      { key: "فانتزی", title: "کارت ویزیت فانتزی و لوکس" },
-      { key: "pvc", title: "کارتهای PVC" },
-      { key: "فرم عمومی", title: "تراکت و سربرگ" },
-      { key: "لیبل", title: "انواع لیبل و برچسب" },
-      { key: "پاکت", title: "انواع پاکت نامه و اداری" }
+      { key: "کارت ویزیت", title: "کارت ویزیت", gid: "2076130864" },
+      { key: "تراکت ، سربرگ ، پوستر", title: "تراکت و پوستر", gid: "1900338465" },
+      { key: "پشت چسبدار (لیبل)", title: "لیبل و برچسب", gid: "1222527184" },
+      { key: "پاکت", title: "پاکت اداری", gid: "2093338645" },
+      { key: "انواع جعبه و بسته بندی", title: "جعبه و بسته‌بندی", gid: "2006393519" },
+      { key: "محصولات تبلیغاتی", title: "تبلیغاتی و هدایا", gid: "1045170615" },
+      { key: "محصولات اداری و تجاری", title: "اداری و تجاری", gid: "1518433362" },
+      { key: "فاکتور", title: "فاکتور و قبض", gid: "1047767151" },
+      { key: "محصولات فست فود", title: "فست‌فود و رستوران", gid: "1821825749" },
+      { key: "محصولات ۶ ساعته", title: "فوری ۶ ساعته", gid: "1819354919" },
+      { key: "سایز سفارشی", title: "سایز سفارشی", gid: "1616408270" }
     ];
 
-    let allRows = [];
-    let activeCategory = "جنس معمولی";
+    const EMBEDDED_ITEMS = ${fallback11SheetsJson};
+    let allRows = EMBEDDED_ITEMS.map((item, idx) => ({
+      id: idx + 1,
+      cat: item.category,
+      prod: item.productName,
+      size: item.size,
+      qty: item.quantity,
+      sides: (item.rawSides || "").includes("دو") ? "دو رو" : "یک رو",
+      baseCost: item.baseCost,
+      delivery: item.deliveryTime || "۳ روز"
+    }));
+    let activeCategory = "کارت ویزیت";
     let cart = [];
     let adminUnlocked = false;
     let failedAttempts = 0;
@@ -422,20 +458,25 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
       return Math.round(wasmExports.calc_unit_price(finalPrice, qty));
     }
 
-    function parseStatefulRows(rawRows) {
+    function parseStatefulRows(rawRows, defaultCat = "کارت ویزیت") {
       const parsed = [];
-      let cat = "جنس معمولی", lastProd = "", lastQty = 0, lastSize = "";
+      let cat = defaultCat, lastProd = "", lastQty = 0, lastSize = "";
       for (let i = 0; i < rawRows.length; i++) {
         const r = rawRows[i];
         if (!r || r.length < 4) continue;
         const c0 = String(r[0] || "").trim(), c2 = String(r[2] || "").trim(), c7 = String(r[7] || "").trim();
         if (c0 === "قیمت" || c2 === "تحویل") {
-          if (c7.includes("فرم عمومی")) cat = "فرم عمومی";
-          else if (c7.includes("لیبل") || c7.includes("برچسب")) cat = "لیبل";
-          else if (c7.includes("سفارشی") || c7.includes("۶ ساعته") || c7.includes("6 ساعته") || c7.includes("عمومی") || c7.includes("معمولی")) cat = "جنس معمولی";
-          else if (c7.includes("فانتزی")) cat = "فانتزی";
-          else if (c7.toLowerCase().includes("pvc")) cat = "pvc";
+          if (c7.includes("فاکتور")) cat = "فاکتور";
+          else if (c7.includes("فست فود") || c7.includes("رستوران") || c7.includes("سینی")) cat = "محصولات فست فود";
+          else if (c7.includes("جعبه") || c7.includes("بسته بندی") || c7.includes("پاکتشو")) cat = "انواع جعبه و بسته بندی";
+          else if (c7.includes("تبلیغاتی") || c7.includes("لیوان")) cat = "محصولات تبلیغاتی";
+          else if (c7.includes("اداری")) cat = "محصولات اداری و تجاری";
+          else if (c7.includes("۶ ساعته") || c7.includes("6 ساعته")) cat = "۶ ساعته";
+          else if (c7.includes("سفارشی") || c7.includes("دلخواه")) cat = "سایز سفارشی";
           else if (c7.includes("پاکت")) cat = "پاکت";
+          else if (c7.includes("لیبل") || c7.includes("برچسب")) cat = "پشت چسبدار (لیبل)";
+          else if (c7.includes("تراکت") || c7.includes("پوستر") || c7.includes("سربرگ") || c7.includes("فرم")) cat = "تراکت ، سربرگ ، پوستر";
+          else if (c7.includes("کارت") || c7.includes("ویزیت") || c7.includes("معمولی") || c7.includes("فانتزی") || c7.toLowerCase().includes("pvc")) cat = "کارت ویزیت";
           lastProd = ""; lastQty = 0; lastSize = "";
           continue;
         }
@@ -443,7 +484,7 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
         if (!baseCost) continue;
         let prod = c7;
         const rawSize = String(r[5] || "").trim();
-        if (cat === "فانتزی" && !prod && rawSize === "60*60" && lastProd === "لمینت برجسته مخملی") {
+        if (cat === "کارت ویزیت" && !prod && rawSize === "60*60" && lastProd.includes("لمینت برجسته مخملی")) {
           prod = "لمینت برجسته مخملی مربع";
         }
         if (prod) lastProd = prod; else prod = lastProd;
@@ -451,13 +492,13 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
         if (size) lastSize = size; else size = lastSize;
         let qty = parseInt(String(r[6] || "").replace(/[^\\d]/g, ""), 10);
         if (qty > 0) lastQty = qty;
-        else if (cat === "پاکت") {
+        else if (cat === "پاکت" || prod.includes("عددی")) {
           const m = prod.match(/(\\d+)\\s*عددی/) || prod.match(/\\b(1000|2000|5000)\\b/);
           qty = m ? parseInt(m[1], 10) : 1000;
           lastQty = qty;
         } else qty = lastQty || 1000;
         const sides = String(r[4] || "").includes("دو") ? "دو رو" : "یک رو";
-        parsed.push({ id: i, cat, prod, size, qty, sides, baseCost, delivery: c2 || "۲ روز" });
+        parsed.push({ id: parsed.length + 1, cat, prod, size, qty, sides, baseCost, delivery: c2 || "۲ روز" });
       }
       return parsed;
     }
@@ -611,6 +652,58 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
       window.open(\`https://wa.me/\${settings.whatsapp}?text=\${encodeURIComponent(lines.join("\\n"))}\`, "_blank");
     }
 
+    function openSearchModal() {
+      document.getElementById("search-modal").classList.remove("hidden");
+      const inp = document.getElementById("global-search-inp");
+      inp.value = "";
+      setTimeout(() => inp.focus(), 50);
+      onGlobalSearchInput();
+    }
+
+    function closeSearchModal() {
+      document.getElementById("search-modal").classList.add("hidden");
+    }
+
+    function onGlobalSearchInput() {
+      const q = (document.getElementById("global-search-inp").value || "").trim().toLowerCase();
+      const box = document.getElementById("search-results-box");
+      const matched = allRows.filter(r => !q || r.prod.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q) || r.size.toLowerCase().includes(q) || r.delivery.toLowerCase().includes(q));
+      if (matched.length === 0) {
+        box.innerHTML = '<div class="py-8 text-center text-slate-400">محصولی با این عبارت یافت نشد.</div>';
+        return;
+      }
+      box.innerHTML = matched.slice(0, 50).map(r => {
+        const fp = calculateCustomerPrice(r.baseCost);
+        return \`<div class="p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onclick="selectSearchResult(\${r.id})">
+          <div>
+            <div class="font-bold text-slate-900 dark:text-slate-100"><span class="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal ml-1.5">\${r.cat}</span>\${r.prod}</div>
+            <div class="text-xs text-slate-500 mt-1">\${r.size} · \${r.sides} · \${r.qty.toLocaleString('fa-IR')} عدد · تحویل: \${r.delivery}</div>
+          </div>
+          <div class="text-left font-bold tabular-nums text-amber-600 dark:text-amber-400">
+            \${fp.toLocaleString('fa-IR')} تومان
+          </div>
+        </div>\`;
+      }).join("");
+    }
+
+    function selectSearchResult(id) {
+      const r = allRows.find(x => x.id === id);
+      if (!r) return;
+      activeCategory = r.cat;
+      closeSearchModal();
+      initCascadingSelectors();
+      document.getElementById("sel-product").value = r.prod;
+      onProductChange();
+      document.getElementById("sel-size").value = r.size;
+      onSizeChange();
+      document.getElementById("sel-qty").value = r.qty;
+      onQtyChange();
+      document.getElementById("sel-sides").value = r.sides;
+      renderAll();
+      const el = document.getElementById("calculator-section");
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
     function openAdminModal() {
       document.getElementById("admin-modal").classList.remove("hidden");
       syncAdminModalUI();
@@ -714,9 +807,25 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
       } else {
         reader.onload = ev => {
           const wb = XLSX.read(ev.target.result, { type: "array" });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          allRows = parseStatefulRows(XLSX.utils.sheet_to_json(ws, { header: 1 }));
-          document.getElementById("sync-source").textContent = "فایل اکسل: " + f.name;
+          let merged = [];
+          for (const sheetName of wb.SheetNames) {
+            const ws = wb.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            let detected = "کارت ویزیت";
+            if (sheetName.includes("فاکتور")) detected = "فاکتور";
+            else if (sheetName.includes("فست فود") || sheetName.includes("رستوران")) detected = "محصولات فست فود";
+            else if (sheetName.includes("جعبه") || sheetName.includes("بسته بندی")) detected = "انواع جعبه و بسته بندی";
+            else if (sheetName.includes("تبلیغاتی")) detected = "محصولات تبلیغاتی";
+            else if (sheetName.includes("اداری")) detected = "محصولات اداری و تجاری";
+            else if (sheetName.includes("پاکت")) detected = "پاکت";
+            else if (sheetName.includes("لیبل") || sheetName.includes("چسبدار")) detected = "پشت چسبدار (لیبل)";
+            else if (sheetName.includes("تراکت") || sheetName.includes("پوستر") || sheetName.includes("سربرگ")) detected = "تراکت ، سربرگ ، پوستر";
+            else if (sheetName.includes("۶ ساعته")) detected = "محصولات ۶ ساعته";
+            else if (sheetName.includes("سفارشی")) detected = "محصولات سایز سفارشی";
+            merged = merged.concat(parseStatefulRows(data, detected));
+          }
+          if (merged.length > 0) allRows = merged;
+          document.getElementById("sync-source").textContent = "فایل اکسل (" + wb.SheetNames.length + " شیت): " + f.name;
           initCascadingSelectors(); renderAll();
         };
         reader.readAsArrayBuffer(f);
@@ -726,20 +835,33 @@ export function buildStandaloneSingleFileHtml(settings?: Partial<AdminSettings>)
     function toggleTheme() { document.documentElement.classList.toggle("dark"); }
 
     async function syncGoogleSheet() {
-      document.getElementById("sync-source").textContent = "در حال دریافت از گوگل شیت...";
+      document.getElementById("sync-source").textContent = "در حال دریافت زنده ۱۱ شیت از گوگل شیت...";
       try {
-        const res = await fetch(GOOGLE_SHEET_CSV_URL, { cache: "no-store" });
-        const csvText = await res.text();
-        allRows = parseStatefulRows(Papa.parse(csvText, { skipEmptyLines: true }).data);
-        document.getElementById("sync-source").textContent = "گوگل شیت زنده (" + allRows.length.toLocaleString('fa-IR') + " ردیف)";
+        let merged = [];
+        for (const cat of CATEGORIES) {
+          try {
+            const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSCtS_8qGEMTduYU06zG5vpW4tSHCGKyJygOnX9mQiTfD_XI895ghJghhTHGhzDag/pub?gid=" + cat.gid + "&single=true&output=csv";
+            const res = await fetch(url);
+            const csvText = await res.text();
+            const data = Papa.parse(csvText, { skipEmptyLines: true }).data;
+            const rows = parseStatefulRows(data, cat.key);
+            merged = merged.concat(rows);
+          } catch(e) {}
+        }
+        if (merged.length > 0) {
+          allRows = merged;
+          document.getElementById("sync-source").textContent = "۱۱ شیت گوگل‌شیت زنده (" + allRows.length.toLocaleString('fa-IR') + " قلم)";
+        }
       } catch {
-        allRows = parseStatefulRows(Papa.parse(FALLBACK_CSV_TEXT, { skipEmptyLines: true }).data);
-        document.getElementById("sync-source").textContent = "کش محلی گوگل شیت (" + allRows.length.toLocaleString('fa-IR') + " ردیف)";
+        document.getElementById("sync-source").textContent = "کش آفلاین ۱۱ شیت (" + allRows.length.toLocaleString('fa-IR') + " قلم)";
       }
       initCascadingSelectors();
       renderAll();
     }
 
+    // Initialize with embedded items immediately, then sync in background
+    initCascadingSelectors();
+    renderAll();
     syncGoogleSheet();
   </script>
 </body>

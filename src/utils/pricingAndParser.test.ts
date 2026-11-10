@@ -52,19 +52,13 @@ test('WASM pricing benchmark runs and returns valid throughput', () => {
   assert.ok(result.opsPerSec > 0);
 });
 
-test('Stateful Forward-Fill Parser parses all 6 categories and handles merged cells', () => {
+test('Stateful Forward-Fill Parser parses categories and handles merged cells', () => {
   const rows = parsePrintSheetCsv(FALLBACK_SHEET_CSV);
-  assert.ok(rows.length > 350, `Expected > 350 rows, got ${rows.length}`);
-
-  const categories = new Set(rows.map((r) => r.category));
-  assert.deepEqual(
-    Array.from(categories),
-    ['جنس معمولی', 'فانتزی', 'pvc', 'فرم عمومی', 'لیبل', 'پاکت']
-  );
+  assert.equal(rows.length, 383, `Expected exactly 383 rows, got ${rows.length}`);
 
   // Rule 2: Check forward-fill on "گلاسه یووی" (Row 1 is یکرو, Row 2 is دورو with empty name/size/qty)
   const glossyUvRows = rows.filter(
-    (r) => r.category === 'جنس معمولی' && r.productName === 'گلاسه یووی'
+    (r) => r.category === 'کارت ویزیت' && r.productName === 'گلاسه یووی'
   );
   assert.equal(glossyUvRows.length, 2);
   assert.equal(glossyUvRows[0].sides, 'یک رو');
@@ -81,9 +75,9 @@ test('Stateful Forward-Fill Parser parses all 6 categories and handles merged ce
 test('Rule 4: Missing Name Fix renames 60*60 under "لمینت برجسته مخملی" to "لمینت برجسته مخملی مربع"', () => {
   const rows = parsePrintSheetCsv(FALLBACK_SHEET_CSV);
   const velvetSquare = rows.find(
-    (r) => r.category === 'فانتزی' && r.productName === 'لمینت برجسته مخملی مربع'
+    (r) => r.category === 'کارت ویزیت' && r.productName === 'لمینت برجسته مخملی مربع'
   );
-  assert.ok(velvetSquare, 'Expected to find "لمینت برجسته مخملی مربع" in فانتزی');
+  assert.ok(velvetSquare, 'Expected to find "لمینت برجسته مخملی مربع" in کارت ویزیت');
   assert.equal(velvetSquare.size, '60*60');
   assert.equal(velvetSquare.quantity, 1000);
   assert.equal(velvetSquare.baseCost, 4506700);
@@ -150,5 +144,42 @@ test('Admin panel salted password hashing and password change validation', () =>
   assert.notEqual(validChange.nextHash, DEFAULT_ADMIN_PASSWORD_HASH);
   assert.equal(verifyAdminPassword('Almas2026!', validChange.nextHash), true);
   assert.equal(verifyAdminPassword('1234', validChange.nextHash), false);
+});
+
+import { searchProducts } from './categoryHelpers';
+import { getBundledFallbackProducts, PRINT_CATEGORIES } from './sheetParser';
+
+test('Product Search accurately finds items by name, material, size and category', () => {
+  const all1779 = getBundledFallbackProducts();
+  assert.equal(all1779.length, 1779, `Expected 1779 products, got ${all1779.length}`);
+
+  // All 11 categories represented
+  const categoryKeys = new Set(all1779.map((r) => r.category));
+  assert.equal(categoryKeys.size, 11);
+  assert.equal(PRINT_CATEGORIES.length, 11);
+
+  // Search "فاکتور" finds NCR invoice items
+  const invoiceResults = searchProducts(all1779, 'فاکتور');
+  assert.ok(invoiceResults.length >= 80);
+  assert.ok(invoiceResults.some((r) => r.category === 'فاکتور'));
+
+  // Search "Table Mat" finds fast food restaurant tray mats
+  const fastfoodResults = searchProducts(all1779, 'Table Mat');
+  assert.ok(fastfoodResults.length >= 20);
+  assert.ok(fastfoodResults.some((r) => r.category === 'محصولات فست فود'));
+
+  // Search "لیوان" finds packaging paper cups and holders
+  const cupResults = searchProducts(all1779, 'لیوان');
+  assert.ok(cupResults.length >= 2);
+  assert.ok(cupResults.some((r) => r.category === 'انواع جعبه و بسته بندی'));
+
+  // Search "قطر" finds circular die-cut labels
+  const circleResults = searchProducts(all1779, 'قطر');
+  assert.ok(circleResults.length >= 10);
+  assert.ok(circleResults.every((r) => r.dimensionLabel.includes('دایره‌ای')));
+
+  // Search "۶ ساعته" finds express 6-hour items
+  const expressResults = searchProducts(all1779, '۶ ساعته');
+  assert.ok(expressResults.length >= 10);
 });
 

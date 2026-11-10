@@ -20,6 +20,9 @@ import {
   Trash2,
   Printer,
   Download,
+  SlidersHorizontal,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import {
   PRINT_CATEGORIES,
@@ -27,6 +30,8 @@ import {
   PrintProductRow,
   parsePrintSheetCsv,
   formatPersianPrice,
+  getBundledFallbackProducts,
+  fetchAndParseAllPublishedSheets,
 } from './utils/sheetParser';
 import {
   FALLBACK_SHEET_CSV,
@@ -42,10 +47,12 @@ import {
   DEFAULT_ADMIN_SETTINGS,
   QuoteCartItem,
 } from './types/studio';
+import { SUB_CATEGORY_FILTERS } from './utils/categoryHelpers';
 import { VisualCutPreview } from './components/VisualCutPreview';
 import { PrepressGuideSection } from './components/PrepressGuideModal';
 import { PreInvoiceModal } from './components/PreInvoiceModal';
 import { AdminPanelModal } from './components/AdminPanelModal';
+import { ProductQuickSearchModal } from './components/ProductQuickSearchModal';
 import { buildStandaloneSingleFileHtml } from './utils/standaloneHtmlBuilder';
 
 const STORAGE_KEY_ADMIN = 'naghshe_negar_admin_settings_v1';
@@ -104,16 +111,27 @@ export default function App() {
     }
   }, []);
 
-  // Product rows state & sync status
+  // Product rows state & sync status (11 sheets with 1,779 items)
   const [allProducts, setAllProducts] = useState<PrintProductRow[]>(() =>
-    parsePrintSheetCsv(FALLBACK_SHEET_CSV)
+    getBundledFallbackProducts()
   );
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>('آماده به کار');
-  const [dataSourceLabel, setDataSourceLabel] = useState<string>('گوگل شیت زنده');
+  const [dataSourceLabel, setDataSourceLabel] = useState<string>('۱۱ شیت گوگل‌شیت');
 
-  // Active Category Tab
-  const [activeCategory, setActiveCategory] = useState<PrintCategoryKey>('جنس معمولی');
+  // Active Category Tab (11 sheets)
+  const [activeCategory, setActiveCategory] = useState<PrintCategoryKey>('کارت ویزیت');
+  // Sub-category Filter inside active category
+  const [activeSubCategoryId, setActiveSubCategoryId] = useState<string>('all');
+  // Inline filter for Step 1 Product Select
+  const [calculatorProductFilter, setCalculatorProductFilter] = useState<string>('');
+
+  // Reset subcategory & filter when category changes
+  const handleSelectCategory = useCallback((catKey: PrintCategoryKey) => {
+    setActiveCategory(catKey);
+    setActiveSubCategoryId('all');
+    setCalculatorProductFilter('');
+  }, []);
 
   // Cascading Calculator Selectors
   const [selectedProductName, setSelectedProductName] = useState<string>('');
@@ -132,6 +150,24 @@ export default function App() {
   const [isPreInvoiceOpen, setIsPreInvoiceOpen] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
   const [isPrepressModalOpen, setIsPrepressModalOpen] = useState<boolean>(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
+
+  // Global Keyboard Shortcut: '/' opens quick product search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement as HTMLElement)?.tagName;
+      if (
+        e.key === '/' &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) &&
+        !isSearchModalOpen
+      ) {
+        e.preventDefault();
+        setIsSearchModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchModalOpen]);
 
   // Quote Cart State
   const [cartItems, setCartItems] = useState<QuoteCartItem[]>(() => {
@@ -203,26 +239,14 @@ export default function App() {
     );
   }, [computeRowPricing, adminSettings.roundingStep]);
 
-  // Live Google Sheet CSV Fetch
+  // Live Google Sheet multi-sheet sync across all 11 categories
   const syncLivePricesFromGoogleSheet = useCallback(async () => {
     setIsSyncing(true);
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      const response = await fetch(LIVE_GOOGLE_SHEET_CSV_URL, {
-        signal: controller.signal,
-        cache: 'no-store',
-      });
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const csvText = await response.text();
-      const parsedRows = parsePrintSheetCsv(csvText);
-      if (parsedRows.length > 0) {
-        setAllProducts(parsedRows);
-        setDataSourceLabel('گوگل شیت زنده');
+      const rows = await fetchAndParseAllPublishedSheets();
+      if (rows && rows.length > 0) {
+        setAllProducts(rows);
+        setDataSourceLabel('۱۱ شیت گوگل‌شیت زنده');
         setLastSyncTime(
           new Intl.DateTimeFormat('fa-IR', {
             hour: '2-digit',
@@ -232,10 +256,10 @@ export default function App() {
         );
       }
     } catch {
-      // Fallback to embedded 208-row snapshot if offline or blocked
-      const fallbackRows = parsePrintSheetCsv(FALLBACK_SHEET_CSV);
+      // Fallback to bundled dataset if offline or blocked
+      const fallbackRows = getBundledFallbackProducts();
       setAllProducts(fallbackRows);
-      setDataSourceLabel('کش محلی گوگل شیت (آفلاین)');
+      setDataSourceLabel('کش محلی ۱۱ شیت (آفلاین)');
       setLastSyncTime(
         new Intl.DateTimeFormat('fa-IR', {
           hour: '2-digit',
@@ -258,14 +282,29 @@ export default function App() {
     [allProducts, activeCategory]
   );
 
-  // Step 1 Options: Unique Product Names in active category
+  // Products filtered by active subcategory
+  const subCategoryProducts = useMemo(() => {
+    if (activeSubCategoryId === 'all') return categoryProducts;
+    const filterObj = SUB_CATEGORY_FILTERS[activeCategory]?.find(
+      (f) => f.id === activeSubCategoryId
+    );
+    if (!filterObj) return categoryProducts;
+    const filtered = categoryProducts.filter(filterObj.predicate);
+    return filtered.length > 0 ? filtered : categoryProducts;
+  }, [categoryProducts, activeCategory, activeSubCategoryId]);
+
+  // Step 1 Options: Unique Product Names in active subcategory, plus inline filter
   const productOptions = useMemo(() => {
     const names = new Set<string>();
-    categoryProducts.forEach((p) => names.add(p.productName));
-    return Array.from(names);
-  }, [categoryProducts]);
+    subCategoryProducts.forEach((p) => names.add(p.productName));
+    const allNames = Array.from(names);
+    if (!calculatorProductFilter.trim()) return allNames;
+    const q = calculatorProductFilter.trim().toLowerCase();
+    const filtered = allNames.filter((name) => name.toLowerCase().includes(q));
+    return filtered.length > 0 ? filtered : allNames;
+  }, [subCategoryProducts, calculatorProductFilter]);
 
-  // Ensure valid selectedProductName when category changes
+  // Ensure valid selectedProductName when category or subcategory changes
   useEffect(() => {
     if (productOptions.length > 0 && !productOptions.includes(selectedProductName)) {
       setSelectedProductName(productOptions[0]);
@@ -353,7 +392,7 @@ export default function App() {
   // Filtered Table Rows
   const filteredTableRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return categoryProducts.filter((row) => {
+    return subCategoryProducts.filter((row) => {
       if (sidesFilter !== 'همه' && row.sides !== sidesFilter) {
         return false;
       }
@@ -365,7 +404,7 @@ export default function App() {
         row.deliveryTime.toLowerCase().includes(q)
       );
     });
-  }, [categoryProducts, sidesFilter, searchQuery]);
+  }, [subCategoryProducts, sidesFilter, searchQuery]);
 
   // Add item to Quote Cart
   const handleAddToCart = useCallback(
@@ -437,10 +476,17 @@ export default function App() {
 
   const handleSelectRowIntoCalculator = (row: PrintProductRow) => {
     setActiveCategory(row.category);
+    setActiveSubCategoryId('all');
+    setCalculatorProductFilter('');
     setSelectedProductName(row.productName);
     setSelectedSize(row.size);
     setSelectedQuantity(row.quantity);
     setSelectedSides(row.sides);
+
+    const calcEl = document.getElementById('calculator-workspace');
+    if (calcEl) {
+      calcEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleDownloadStandaloneHtml = () => {
@@ -542,6 +588,20 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Prominent Instant Product Search Button */}
+            <button
+              type="button"
+              onClick={() => setIsSearchModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-slate-900 dark:text-amber-400 transition-colors whitespace-nowrap shrink-0 cursor-pointer group"
+              title="جستجوی سریع محصول در بین ۳۸۳ قلم (کلید میانبر /)"
+            >
+              <Search className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
+              <span>جستجوی محصول چاپی</span>
+              <kbd className="hidden sm:inline-block font-mono text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                /
+              </kbd>
+            </button>
+
             <button
               type="button"
               onClick={syncLivePricesFromGoogleSheet}
@@ -593,12 +653,12 @@ export default function App() {
           </div>
         </section>
 
-        {/* Category Tabs */}
-        <section aria-label="دسته‌بندی محصولات چاپی" id="calculator-workspace">
+        {/* 11 Category Tabs corresponding to 11 sheets */}
+        <section aria-label="دسته‌بندی محصولات چاپی" id="calculator-workspace" className="space-y-3">
           <div
             role="tablist"
             aria-label="دسته‌بندی خدمات چاپ"
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11 gap-2"
           >
             {PRINT_CATEGORIES.map((cat) => {
               const isSelected = activeCategory === cat.key;
@@ -609,49 +669,87 @@ export default function App() {
                   role="tab"
                   aria-selected={isSelected}
                   type="button"
-                  onClick={() => setActiveCategory(cat.key)}
-                  className={`text-right p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between ${
+                  onClick={() => handleSelectCategory(cat.key)}
+                  className={`text-right p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
                     isSelected
-                      ? 'bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 border-slate-900 dark:border-amber-500'
+                      ? 'bg-slate-900 dark:bg-amber-500 text-white dark:text-slate-950 border-slate-900 dark:border-amber-500 shadow-md ring-2 ring-amber-500/20'
                       : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-bold whitespace-nowrap truncate">
-                        {cat.title}
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="text-xs font-extrabold truncate">
+                        {cat.shortTitle}
                       </span>
                       <span
-                        className={`text-xs font-mono-num shrink-0 ${
+                        className={`text-[11px] font-mono-num shrink-0 ${
                           isSelected
                             ? 'text-amber-300 dark:text-slate-900 font-bold'
                             : 'text-slate-400 dark:text-slate-500'
                         }`}
                       >
-                        {count.toLocaleString('fa-IR')} مورد
+                        {count.toLocaleString('fa-IR')}
                       </span>
                     </div>
                     <p
-                      className={`text-xs mt-1.5 line-clamp-1 ${
+                      className={`text-[11px] mt-1 line-clamp-1 leading-snug ${
                         isSelected
-                          ? 'text-slate-300 dark:text-slate-800'
+                          ? 'text-slate-300 dark:text-slate-900'
                           : 'text-slate-500 dark:text-slate-400'
                       }`}
+                      title={cat.subtitle}
                     >
                       {cat.subtitle}
                     </p>
                   </div>
 
                   <div
-                    className={`mt-3 pt-2 border-t text-[11px] flex items-center justify-between ${
+                    className={`mt-2 pt-1.5 border-t text-[10px] flex items-center justify-between ${
                       isSelected
-                        ? 'border-slate-700 dark:border-slate-950/20 text-amber-300 dark:text-slate-900'
-                        : 'border-slate-100 dark:border-slate-800/80 text-slate-500 dark:text-slate-400'
+                        ? 'border-slate-700 dark:border-slate-950/20 text-amber-300 dark:text-slate-900 font-semibold'
+                        : 'border-slate-100 dark:border-slate-800/80 text-slate-400'
                     }`}
                   >
-                    <span>کد شیت: {cat.key}</span>
-                    <span>{cat.badgeText}</span>
+                    <span className="truncate">{cat.badgeText}</span>
                   </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-Category Filter Pills inside active category */}
+          <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto no-scrollbar shadow-2xs">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap flex items-center gap-1.5 shrink-0 ml-1">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
+              <span>فیلتر زیرمجموعه:</span>
+            </span>
+            {SUB_CATEGORY_FILTERS[activeCategory]?.map((sub) => {
+              const isSelected = activeSubCategoryId === sub.id;
+              const count = allProducts.filter(
+                (p) => p.category === activeCategory && sub.predicate(p)
+              ).length;
+              return (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveSubCategoryId(sub.id);
+                    setCalculatorProductFilter('');
+                  }}
+                  className={`px-3 py-1.5 text-xs rounded-lg font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                    isSelected
+                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                  }`}
+                >
+                  <span>{sub.shortLabel}</span>
+                  <span
+                    className={`text-[10px] font-mono-num ${
+                      isSelected ? 'text-slate-950 font-bold' : 'text-slate-400'
+                    }`}
+                  >
+                    ({count.toLocaleString('fa-IR')})
+                  </span>
                 </button>
               );
             })}
@@ -681,25 +779,55 @@ export default function App() {
               {/* 4 Cascading Selectors */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
                 {/* 1. Product Name */}
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="calc-product-select"
-                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
-                  >
-                    ۱. انتخاب نوع محصول و جنس کاغذ / مقوا:
-                  </label>
-                  <select
-                    id="calc-product-select"
-                    value={selectedProductName}
-                    onChange={(e) => setSelectedProductName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
-                  >
-                    {productOptions.map((prodName) => (
-                      <option key={prodName} value={prodName}>
-                        {prodName}
-                      </option>
-                    ))}
-                  </select>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="calc-product-select"
+                      className="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+                    >
+                      ۱. انتخاب نوع محصول و جنس کاغذ / مقوا:
+                    </label>
+                    <span className="text-[11px] text-slate-400 font-mono-num">
+                      {productOptions.length.toLocaleString('fa-IR')} محصول در این گروه
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1 min-w-0">
+                      <select
+                        id="calc-product-select"
+                        value={selectedProductName}
+                        onChange={(e) => setSelectedProductName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-amber-500"
+                      >
+                        {productOptions.map((prodName) => (
+                          <option key={prodName} value={prodName}>
+                            {prodName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Inline Quick Filter in Step 1 */}
+                    <div className="sm:w-56 relative shrink-0">
+                      <input
+                        type="text"
+                        value={calculatorProductFilter}
+                        onChange={(e) => setCalculatorProductFilter(e.target.value)}
+                        placeholder="فیلتر نام محصول..."
+                        className="w-full pl-7 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-500"
+                      />
+                      {calculatorProductFilter ? (
+                        <button
+                          type="button"
+                          onClick={() => setCalculatorProductFilter('')}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* 2. Size */}
@@ -1239,6 +1367,16 @@ export default function App() {
           onClose={() => setIsPrepressModalOpen(false)}
         />
       )}
+
+      {/* Global Instant Product Search Modal */}
+      <ProductQuickSearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        products={allProducts}
+        onSelectProduct={handleSelectRowIntoCalculator}
+        onQuickAddToCart={(p) => handleAddToCart(p, 1, '')}
+        computeRowPricing={computeRowPricing}
+      />
     </div>
   );
 }

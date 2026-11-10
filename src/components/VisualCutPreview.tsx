@@ -45,7 +45,9 @@ export const VisualCutPreview: React.FC<VisualCutPreviewProps> = ({ product }) =
 
   const persianW = widthMm.toLocaleString('fa-IR');
   const persianH = heightMm.toLocaleString('fa-IR');
-  const isPvc = product.category === 'pvc';
+  const isPvc =
+    product.productName.toLowerCase().includes('pvc') ||
+    product.productName.includes('پی وی سی');
   const hasRounded = isRoundedCorner || isPvc;
 
   return (
